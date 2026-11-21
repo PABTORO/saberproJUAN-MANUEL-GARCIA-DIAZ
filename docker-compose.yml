@@ -1,0 +1,7 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: saberpro-rabbit
+    ports:
+      - "5672:5672"
+      - "15672:15672"   # consola: http://localhost:15672 (guest / guest)

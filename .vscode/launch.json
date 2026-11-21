@@ -1,0 +1,28 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "QuestionServiceApplication",
+            "request": "launch",
+            "mainClass": "co.edu.unicauca.saberpro.question.QuestionServiceApplication",
+            "projectName": "question-service"
+        },
+        {
+            "type": "java",
+            "name": "LifecycleServiceApplication",
+            "request": "launch",
+            "mainClass": "co.edu.unicauca.saberpro.lifecycle.LifecycleServiceApplication",
+            "projectName": "lifecycle-service"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-ValidationServiceApplication<validation-service>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "co.edu.unicauca.saberpro.validation.ValidationServiceApplication",
+            "projectName": "validation-service",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

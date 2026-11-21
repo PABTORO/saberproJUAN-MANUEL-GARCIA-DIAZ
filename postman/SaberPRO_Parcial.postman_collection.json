@@ -1,0 +1,172 @@
+{
+  "info": {
+    "name": "SaberPRO - Parcial Corte II",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Crear pregunta válida (201)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{questionUrl}}/questions"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"statement\": \"¿Cuál es la capital de Colombia?\",\n  \"options\": [\n    {\n      \"key\": \"A\",\n      \"text\": \"Medellín\"\n    },\n    {\n      \"key\": \"B\",\n      \"text\": \"Bogotá\"\n    },\n    {\n      \"key\": \"C\",\n      \"text\": \"Cali\"\n    },\n    {\n      \"key\": \"D\",\n      \"text\": \"Popayán\"\n    }\n  ],\n  \"correctKey\": \"B\",\n  \"justification\": \"Bogotá es la capital y sede de los poderes públicos del país.\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "const j = pm.response.json();",
+              "pm.test('Estado DRAFT', () => pm.expect(j.status).to.eql('DRAFT'));",
+              "pm.test('Tiene id y 4 opciones', () => { pm.expect(j.id).to.exist; pm.expect(j.options.length).to.eql(4); });",
+              "pm.collectionVariables.set('questionId', j.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Crear pregunta inválida (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{questionUrl}}/questions"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"statement\": \"Pregunta con solo 3 opciones\",\n  \"options\": [\n    {\n      \"key\": \"A\",\n      \"text\": \"Uno\"\n    },\n    {\n      \"key\": \"B\",\n      \"text\": \"Dos\"\n    },\n    {\n      \"key\": \"C\",\n      \"text\": \"Tres\"\n    }\n  ],\n  \"correctKey\": \"Z\",\n  \"justification\": \"corta\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+              "pm.test('Lista de errores', () => pm.expect(pm.response.json().errors.length).to.be.above(0));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Enviar a revisión (202)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{questionUrl}}/questions/{{questionId}}/submit"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('202 Accepted', () => pm.response.to.have.status(202));",
+              "const j = pm.response.json();",
+              "pm.test('operationId presente', () => pm.expect(j.operationId).to.be.a('string'));",
+              "pm.test('Estado PROCESSING', () => pm.expect(j.status).to.eql('PROCESSING'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3b. Estado en Lifecycle Service (PENDING_REVIEW)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{lifecycleUrl}}/lifecycle/questions/{{questionId}}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('PENDING_REVIEW', () => pm.expect(pm.response.json().state).to.eql('PENDING_REVIEW'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. RabbitMQ: cola y mensajes entregados",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{rabbitUrl}}/api/queues/%2F/question.submit.review.queue"
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "guest"
+            },
+            {
+              "key": "password",
+              "value": "guest"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const j = pm.response.json();",
+              "pm.test('Mensajes publicados >= 1', () => pm.expect(j.message_stats.publish).to.be.at.least(1));"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "questionUrl",
+      "value": "http://localhost:8083"
+    },
+    {
+      "key": "lifecycleUrl",
+      "value": "http://localhost:8084"
+    },
+    {
+      "key": "rabbitUrl",
+      "value": "http://localhost:15672"
+    },
+    {
+      "key": "questionId",
+      "value": "1"
+    }
+  ]
+}
